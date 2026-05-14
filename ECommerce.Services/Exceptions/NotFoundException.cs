@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ECommerce.Services.Exceptions
+{
+    public class NotFoundException(string message) : Exception(message)
+    {
+
+
+    }
+
+    public sealed class ProductNotFoundException : NotFoundException { 
+    
+        public ProductNotFoundException(int id) : base($"Product with id {id} was not found.")
+        {
+
+        }
+
+    }
+}
