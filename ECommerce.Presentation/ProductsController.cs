@@ -1,5 +1,6 @@
 ﻿using ECommerce.Presentation.Attrbuites;
 using ECommerce.ServicesAbstraction;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 using Shared.DTOS.ProductDTOS;
@@ -24,6 +25,7 @@ namespace ECommerce.Presentation
         // get all products
 
         [HttpGet]
+        [Authorize]
         [RedisCache]
         public async Task<ActionResult<PaginatedResult<ProductDTO>>> GetAllProducts(
           [FromQuery]  ProductQueryParams queryParams)

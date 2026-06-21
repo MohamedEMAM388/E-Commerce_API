@@ -12,11 +12,16 @@ using ECommerce.Persistence.Repositories;
 using ECommerce.Services;
 using ECommerce.Services.Profiles;
 using ECommerce.ServicesAbstraction;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace E_Commerce_API
@@ -32,7 +37,34 @@ namespace E_Commerce_API
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "API.ECommerce", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+            });
 
             builder.Services.AddDbContext<StoreDbContext>(options => {
 
@@ -79,6 +111,34 @@ namespace E_Commerce_API
 
             builder.Services.AddScoped<IAuthenticationServies, AuthenticationServies>();
 
+            // validate on token in each request
+
+            builder.Services.AddAuthentication(options =>
+            {
+
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters() { 
+                                   
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["JWTOptions:Issuer"],
+                    ValidAudience = builder.Configuration["JWTOptions:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWTOptions:key"]!))
+
+                };
+            
+            });
+
+            builder.Services.AddScoped<IOrderServies, OrderServies>();
+            builder.Services.AddScoped<IPaymentServies, PaymentServies>();
+
             // Pipelines [MiddleWares]
 
             var app = builder.Build();
@@ -94,12 +154,18 @@ namespace E_Commerce_API
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(options => {
+
+                    options.DisplayRequestDuration();
+                    options.EnableFilter();
+                    options.DocExpansion(DocExpansion.None);
+                });
             }
 
             app.UseStaticFiles();
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

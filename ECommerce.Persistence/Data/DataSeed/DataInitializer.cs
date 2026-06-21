@@ -1,5 +1,6 @@
 ﻿using ECommerce.Domain.Contarct;
 using ECommerce.Domain.Entities;
+using ECommerce.Domain.Entities.OrderModule;
 using ECommerce.Domain.Entities.Product;
 using ECommerce.Persistence.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -30,28 +31,32 @@ namespace ECommerce.Persistence.Data.DataSeed
                 var hasbrand = await _dbContext.ProductBrands.AnyAsync();
                 var hastype = await _dbContext.ProductTypes.AnyAsync();
                 var hasproduct = await _dbContext.Products.AnyAsync();
+                var hasdeliverymethod = await _dbContext.Set<DeliveryMethod>().AnyAsync();
 
-                if (hasbrand && hastype && hasproduct)
+                if (hasbrand && hastype && hasproduct && hasdeliverymethod)
                     return;
 
                 if (!hasbrand)
-                {
+                   await SeedDataFromJsonAsync<ProductBrand, int>
+                        ("brands.json", _dbContext.ProductBrands);
 
-                   await SeedDataFromJsonAsync<ProductBrand, int>("brands.json", _dbContext.ProductBrands);
-                }
                 if (!hastype)
-                {
 
-                    await SeedDataFromJsonAsync<ProductType, int>("types.json", _dbContext.ProductTypes);
-                }
+                    await SeedDataFromJsonAsync<ProductType, int>
+                        ("types.json", _dbContext.ProductTypes);
 
                 await _dbContext.SaveChangesAsync();
                 if (!hasproduct)
-                {
-                   await SeedDataFromJsonAsync<Product, int>("products.json", _dbContext.Products);
-                   await _dbContext.SaveChangesAsync();
+                   await SeedDataFromJsonAsync<Product, int>
+                        ("products.json", _dbContext.Products);
 
-                }
+
+                if (!hasdeliverymethod) 
+                    await SeedDataFromJsonAsync<DeliveryMethod, int>
+                        ("delivery.json", _dbContext.Set<DeliveryMethod>());
+
+
+                await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {

@@ -4,6 +4,7 @@ using ECommerce.Persistence.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerce.Persistence.Data.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    partial class StoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619202738_OrderModuleEntitiesCreateAndSeed")]
+    partial class OrderModuleEntitiesCreateAndSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,9 +65,6 @@ namespace ECommerce.Persistence.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid?>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -73,8 +73,6 @@ namespace ECommerce.Persistence.Data.Migrations
                         .HasColumnType("decimal(8,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
 
                     b.ToTable("ItemsOrder");
                 });
@@ -90,10 +88,6 @@ namespace ECommerce.Persistence.Data.Migrations
 
                     b.Property<DateTimeOffset>("OrderDate")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("PaymentIntent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -191,10 +185,6 @@ namespace ECommerce.Persistence.Data.Migrations
 
             modelBuilder.Entity("ECommerce.Domain.Entities.OrderModule.ItemsOrder", b =>
                 {
-                    b.HasOne("ECommerce.Domain.Entities.OrderModule.Order", null)
-                        .WithMany("Items")
-                        .HasForeignKey("OrderId");
-
                     b.OwnsOne("ECommerce.Domain.Entities.OrderModule.ProductItemOrder", "product", b1 =>
                         {
                             b1.Property<int>("ItemsOrderId")
@@ -233,7 +223,7 @@ namespace ECommerce.Persistence.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("ECommerce.Domain.Entities.OrderModule.OrderAddress", "Address", b1 =>
+                    b.OwnsOne("ECommerce.Domain.Entities.OrderModule.ShippingAddress", "Address", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uniqueidentifier");
@@ -294,11 +284,6 @@ namespace ECommerce.Persistence.Data.Migrations
                     b.Navigation("ProductBrand");
 
                     b.Navigation("ProductType");
-                });
-
-            modelBuilder.Entity("ECommerce.Domain.Entities.OrderModule.Order", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

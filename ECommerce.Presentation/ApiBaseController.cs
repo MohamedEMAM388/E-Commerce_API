@@ -5,6 +5,7 @@ using Shared.CommonResponses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -97,5 +98,8 @@ namespace ECommerce.Presentation
                                ErrorType.Validation => StatusCodes.Status400BadRequest,
                                _=> StatusCodes.Status500InternalServerError
                            };
+
+
+        protected string GeEmailFromTokenClaims() => User.FindFirstValue(ClaimTypes.Email)!;
     }
 }

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Shared.DTOS.ProductDTOS
 {
-    public class ProductBrandDTO
+    public record ProductBrandDTO
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = default!;
+        public int Id { get; init; }
+        public string Name { get; init; } = default!;
     }
 }
