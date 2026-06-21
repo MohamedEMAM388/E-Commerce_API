@@ -2,12 +2,15 @@
 using ECommerce.Domain.Contarct;
 using ECommerce.Domain.Entities.OrderModule;
 using ECommerce.Domain.Entities.Product;
+using ECommerce.Services.Specifications.OrderSpecifications;
 using ECommerce.ServicesAbstraction;
 using Microsoft.Extensions.Configuration;
 using Shared.CommonResponses;
 using Shared.DTOS.BasketDTOS;
 using Shared.DTOS.OrderDTOS;
 using Stripe;
+using Stripe.Forwarding;
+using Stripe.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +29,7 @@ namespace ECommerce.Services
 
         public PaymentServies(IBasketRepository basketRepository, 
                              IunitOfWork unitOfWork , IConfiguration configuration,
-                              IMapper mapper)
+                              IMapper mapper )
         {
             _basketRepository = basketRepository;
             _unitOfWork = unitOfWork;
@@ -107,6 +110,39 @@ namespace ECommerce.Services
 
             return _mapper.Map<CustomerBasketDTO>(basket);
 
+        }
+
+        public async Task UpdateOrderPaymentStatus(string request, string stripesignture)
+        {
+            var endpointSecret = _configuration["Stripe:EndPointSecret"];
+            var stripeEvent = EventUtility.ConstructEvent(request,stripesignture, endpointSecret);
+
+            // Handle the event
+            var paymentintent = stripeEvent.Data.Object as PaymentIntent;
+            var spec = new OrderWithPaymentIntentSpecification(paymentintent!.Id);
+            var order = await _unitOfWork.GetRepository<Order, Guid>().GetByIdAsync(spec);
+            if (stripeEvent.Type == EventTypes.PaymentIntentSucceeded)
+            {
+
+
+                order!.Status = OrderStatus.paymentReceived;
+                _unitOfWork.GetRepository<Order, Guid>().Update(order);
+
+                await _unitOfWork.SaveChangesAsync();
+            }
+            else if (stripeEvent.Type == EventTypes.PaymentIntentPaymentFailed) 
+            {
+   
+                order!.Status = OrderStatus.paymentFailed;
+                _unitOfWork.GetRepository<Order, Guid>().Update(order);
+
+                await _unitOfWork.SaveChangesAsync();
+            }
+            // ... handle other event types
+            else
+            {
+                Console.WriteLine("Unhandled event type: {0}", stripeEvent.Type);
+            }
         }
     }
 }
